@@ -260,9 +260,9 @@ namespace HyperPart {
 				if (orig2new.count(i))
 					continue;
 				// Pick a random node to merge with
-				for (int a = 0; a < 5; a++) {
+				for (int a = 0; a < 10; a++) {
 					int merge_edge = rng.rng(GetSize(n.edges));
-					auto &e = g.edges.at(merge_edge);
+					auto &e = g.edges.at(n.edges.at(merge_edge));
 					if (GetSize(e.nodes) > 10)
 						continue;
 					int merge_node = e.nodes.at(rng.rng(GetSize(e.nodes)));
@@ -555,6 +555,7 @@ fail:
 		for (auto &n : g.nodes)
 			if (!n.fixed)
 				++non_fixed_nodes;
+		std::cerr << "enter level=" << level << ", N=" << non_fixed_nodes << std::endl;
 		FMPartitioner fm(g, partitions);
 		fm.init();
 		if (non_fixed_nodes <= 200) {
@@ -572,7 +573,7 @@ fail:
 		// The FM optimisation phase
 		fm.run();
 		// Status print
-		std::cerr << "level=" << level << ", N=" << non_fixed_nodes << ", cost=" << fm.compute_cost() << std::endl;
+		std::cerr << "exit level=" << level << ", N=" << non_fixed_nodes << ", cost=" << fm.compute_cost() << std::endl;
 	}
 
 
