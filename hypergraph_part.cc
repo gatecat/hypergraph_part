@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <unordered_set>
 #include <iostream>
+#include <cmath>
 
 /*
 
@@ -304,14 +305,14 @@ namespace HyperPart {
 									if (GetSize(new2orig.at(n2_idx)) > 2)
 										continue;
 									// Alias to the first node in the cluster
-									neighbours[new2orig.at(n2_idx).front()] += (1.0f / GetSize(e.nodes));
+									neighbours[new2orig.at(n2_idx).front()] += (1.0f / sqrt(GetSize(e.nodes)));
 								} else if (orig2new.count(i)) {
 									int n2_idx = orig2new.at(i);
 									if ((coarsened.nodes.at(n2_idx).area + merge_node_data.area) > (3 * average_area))
 										continue;
-									neighbours[neighbour] += (1.0f / GetSize(e.nodes));
+									neighbours[neighbour] += (1.0f / sqrt(GetSize(e.nodes)));
 								} else {
-									neighbours[neighbour] += (1.0f / GetSize(e.nodes));
+									neighbours[neighbour] += (1.0f / sqrt(GetSize(e.nodes)));
 								}
 							}
 						}
