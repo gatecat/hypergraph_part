@@ -267,25 +267,44 @@ namespace HyperPart {
 				// Already merged, skip
 				if (orig2new.count(i))
 					continue;
-				// Pick a random node to merge with
-				const int n_attempts = 20;
 				if (GetSize(n.edges) > 0) {
-					for (int a = 0; a < n_attempts; a++) {
-						int merge_edge = rng.rng(GetSize(n.edges));
-						auto &e = g.edges.at(n.edges.at(merge_edge));
-						if (GetSize(e.nodes) > 10 && a < (n_attempts - 5))
-							continue;
-						int merge_node = e.nodes.at(rng.rng(GetSize(e.nodes)));
-						if (merge_node == i)
-							continue;
+					std::unordered_map<int, int> neighbours;
+					for (int thresh = 10; thresh < 90; thresh += 20) {
+						for (int merge_edge : n.edges) {
+							auto &e = g.edges.at(merge_edge);
+							if (GetSize(e.nodes) > thresh)
+								continue;
+							for (int neighbour : e.nodes) {
+								if (neighbour == i)
+									continue;
+								auto &merge_node_data = g.nodes.at(neighbour);
+								if (merge_node_data.fixed)
+									continue;
+								if (orig2new.count(neighbour)) {
+									// Already a cluster
+									int n2_idx = orig2new.at(neighbour);
+									if (GetSize(new2orig.at(n2_idx)) > 3)
+										continue;
+									// Alias to the first node in the cluster
+									neighbours[new2orig.at(n2_idx).front()]++;
+								} else {
+									neighbours[neighbour]++;
+								}
+							}
+						}
+						if (!neighbours.empty())
+							break;
+					}
+					if (GetSize(neighbours) > 0) {
+						auto best_neighbour = std::max_element(neighbours.begin(), neighbours.end(),
+							[&](const std::pair<int, int> &a, const std::pair<int, int> &b) {
+								return (a.second < b.second) || (rng.rng(2) == 1);
+							});
+						int merge_node = best_neighbour->first;
 						auto &merge_node_data = g.nodes.at(merge_node);
-						if (merge_node_data.fixed)
-							continue;
 						if (orig2new.count(merge_node)) {
 							// Already a cluster
 							int n2_idx = orig2new.at(merge_node);
-							if (GetSize(new2orig.at(n2_idx)) > 5)
-								continue;
 							coarsened.nodes.at(n2_idx).area += n.area;
 							new2orig[n2_idx].push_back(i);
 							orig2new[i] = n2_idx;
