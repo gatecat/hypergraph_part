@@ -21,39 +21,48 @@ namespace HyperPart {
 	void Hypergraph::read(std::istream &in) {
 		nodes.clear();
 		edges.clear();
-		int nedges = 0 , nnodes = 0;
-		in >> nnodes >> nedges;
+		int nedges = 0 , nnodes = 0, type = 0;
+		std::string line;
+
+		auto next_line = [&]() {
+			HYPER_ASSERT(in);
+			std::getline(in, line);
+		};
+
+		next_line();
+
+		std::stringstream header(line);
+		header >> nedges >> nnodes >> type;
+
 		nodes.resize(nnodes);
 		edges.resize(nedges);
-		std::string line;
-		for (int i = 0; i < nnodes; i++) {
-			do {
-				HYPER_ASSERT(in);
-				std::getline(in, line);
-			} while (std::all_of(line.begin(), line.end(), [] (char c) { return std::isblank(c); } ));
-			std::stringstream lread(line);
-			char c;
-			int p;
-			bool f;
-			lread >> c >> p >> f;
-			HYPER_ASSERT(c == 'N');
-			nodes.at(i).partition = p;
-			nodes.at(i).fixed = f;
-		}
+
+		std::cerr << "|E|=" << nedges << " |V|=" << nnodes << " type=" << type << std::endl;
+
 		for (int i = 0; i < nedges; i++) {
-			do {
-				HYPER_ASSERT(in);
-				std::getline(in, line);
-			} while (std::all_of(line.begin(), line.end(), [] (char c) { return std::isblank(c); } ));
-			std::stringstream lread(line);
-			char c;
-			int w, n;
-			lread >> c >> w;
-			HYPER_ASSERT(c == 'E');
-			edges.at(i).weight = w;
-			while (lread >> n) {
-				nodes.at(n).edges.push_back(i);
-				edges.at(i).nodes.push_back(n);
+			next_line();
+			std::stringstream edge(line);
+			if (type == 1 || type == 11) {
+				edge >> edges.at(i).weight;
+			} else {
+				edges.at(i).weight = 1;
+			}
+			int node;
+			while (edge >> node) {
+				edges.at(i).nodes.push_back(node);
+				nodes.at(node).edges.push_back(i);
+			}
+		}
+		for (int i = 0; i < nnodes; i++) {
+			nodes.at(i).partition = -1;
+			nodes.at(i).fixed = false;
+			nodes.at(i).area = 1;
+		}
+		if (type == 10 || type == 11) {
+			for (int i = 0; i < nnodes; i++) {
+				next_line();
+				std::stringstream node(line);
+				node >> nodes.at(i).area;
 			}
 		}
 	}

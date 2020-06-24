@@ -260,39 +260,41 @@ namespace HyperPart {
 				if (orig2new.count(i))
 					continue;
 				// Pick a random node to merge with
-				for (int a = 0; a < 10; a++) {
-					int merge_edge = rng.rng(GetSize(n.edges));
-					auto &e = g.edges.at(n.edges.at(merge_edge));
-					if (GetSize(e.nodes) > 10)
-						continue;
-					int merge_node = e.nodes.at(rng.rng(GetSize(e.nodes)));
-					if (merge_node == i)
-						continue;
-					auto &merge_node_data = g.nodes.at(merge_node);
-					if (merge_node_data.fixed)
-						continue;
-					if (orig2new.count(merge_node)) {
-						// Already a cluster
-						int n2_idx = orig2new.at(merge_node);
-						if (GetSize(new2orig.at(n2_idx)) > 5)
+				if (GetSize(n.edges) > 0) {
+					for (int a = 0; a < 10; a++) {
+						int merge_edge = rng.rng(GetSize(n.edges));
+						auto &e = g.edges.at(n.edges.at(merge_edge));
+						if (GetSize(e.nodes) > 10)
 							continue;
-						coarsened.nodes.at(n2_idx).area += n.area;
-						new2orig[n2_idx].push_back(i);
-						orig2new[i] = n2_idx;
-						goto merged;
-					} else {
-						// Create a cluster
-						coarsened.nodes.emplace_back();
-						auto &n2 = coarsened.nodes.back();
-						n2.fixed = false;
-						n2.partition = -1;
-						n2.area = n.area;
+						int merge_node = e.nodes.at(rng.rng(GetSize(e.nodes)));
+						if (merge_node == i)
+							continue;
+						auto &merge_node_data = g.nodes.at(merge_node);
+						if (merge_node_data.fixed)
+							continue;
+						if (orig2new.count(merge_node)) {
+							// Already a cluster
+							int n2_idx = orig2new.at(merge_node);
+							if (GetSize(new2orig.at(n2_idx)) > 5)
+								continue;
+							coarsened.nodes.at(n2_idx).area += n.area;
+							new2orig[n2_idx].push_back(i);
+							orig2new[i] = n2_idx;
+							goto merged;
+						} else {
+							// Create a cluster
+							coarsened.nodes.emplace_back();
+							auto &n2 = coarsened.nodes.back();
+							n2.fixed = false;
+							n2.partition = -1;
+							n2.area = n.area;
 
-						new2orig[GetSize(coarsened.nodes) - 1].push_back(i);
-						new2orig[GetSize(coarsened.nodes) - 1].push_back(merge_node);
-						orig2new[i] = GetSize(coarsened.nodes) - 1;
-						orig2new[merge_node] = GetSize(coarsened.nodes) - 1;
-						goto merged;
+							new2orig[GetSize(coarsened.nodes) - 1].push_back(i);
+							new2orig[GetSize(coarsened.nodes) - 1].push_back(merge_node);
+							orig2new[i] = GetSize(coarsened.nodes) - 1;
+							orig2new[merge_node] = GetSize(coarsened.nodes) - 1;
+							goto merged;
+						}
 					}
 				}
 				if (0) {
@@ -553,7 +555,7 @@ fail:
 	void partition_recursive(DeterministicRNG &rng, Hypergraph &g, const std::vector<PartitionConstraint> &partitions, int level) {
 		int non_fixed_nodes = 0;
 		for (auto &n : g.nodes)
-			if (!n.fixed)
+			if (!n.fixed && GetSize(n.edges) > 0)
 				++non_fixed_nodes;
 		std::cerr << "enter level=" << level << ", N=" << non_fixed_nodes << std::endl;
 		FMPartitioner fm(g, partitions);
@@ -573,7 +575,11 @@ fail:
 		// The FM optimisation phase
 		fm.run();
 		// Status print
-		std::cerr << "exit level=" << level << ", N=" << non_fixed_nodes << ", cost=" << fm.compute_cost() << std::endl;
+		std::cerr << "exit level=" << level << ", N=" << non_fixed_nodes << ", cost=" << fm.compute_cost();
+		for (int i = 0; i < GetSize(partitions); i++) {
+			std::cerr << ", A" << i << "=" << fm.part_area.at(i);
+		}
+		std::cerr << std::endl;
 	}
 
 

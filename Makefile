@@ -10,6 +10,9 @@ CXXFLAGS += -Icore -I. -fPIC -Wall -MD -g -std=c++14 -O1
 LDFLAGS ?=
 LDLIBS := $(LDLIBS) -lstdc++ -lm
 
+%.d : %.cc
+	$(MAKEDEPEND)
+
 %.o: %.cc
 	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
