@@ -283,7 +283,7 @@ namespace HyperPart {
 						if (orig2new.count(merge_node)) {
 							// Already a cluster
 							int n2_idx = orig2new.at(merge_node);
-							if (GetSize(new2orig.at(n2_idx)) > 5)
+							if (GetSize(new2orig.at(n2_idx)) > 2)
 								continue;
 							coarsened.nodes.at(n2_idx).area += n.area;
 							new2orig[n2_idx].push_back(i);
@@ -385,6 +385,8 @@ namespace HyperPart {
 					}
 					continue;
 				}
+				if (GetSize(e.nodes) == 1)
+					continue;
 				int src_tally = 0;
 				int dst_tally = 0;
 				for (int n2_idx : e.nodes) {
@@ -418,13 +420,11 @@ namespace HyperPart {
 							// This other node is the last one left in the src partition
 							// other than the one being moved
 							gains.update_node(n2_idx, e.weight);
-							break;
 						}
 						if (n2.partition == dst_part && dst_tally == 1) {
 							// This other node is the only other one in the dst partition
 							// other than the one being moved
 							gains.update_node(n2_idx, -e.weight);
-							break;
 						}
 					}
 				}
@@ -460,6 +460,9 @@ namespace HyperPart {
 						continue;
 					}
 
+					if (GetSize(e.nodes) == 1)
+						continue;
+
 					int src_tally = 0;
 					int dst_tally = 0;
 					for (int n2_idx : e.nodes) {
@@ -494,6 +497,8 @@ namespace HyperPart {
 			int best_score_idx = -1;
 
 			setup_initial_gains();
+
+			int start_cost = compute_cost();
 
 			while(true) {
 				int move_node = -1;
@@ -554,6 +559,8 @@ fail:
 				part_area.at(mm.second) += n.area;
 				n.partition = mm.second;
 			}
+
+			std::cerr << "     start: " << start_cost << " end: " << compute_cost() << " incr_gain: " << best_score << std::endl;
 		}
 
 	};

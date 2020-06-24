@@ -15,8 +15,8 @@ int main(int argc, char const *argv[])
 	std::vector<PartitionConstraint> parts;
 	for (int i = 0; i < 2; i++) {
 		parts.emplace_back();
-		parts.back().min_nodes = GetSize(g.nodes) * 0.475;
-		parts.back().max_nodes = GetSize(g.nodes) * 0.525;
+		parts.back().min_nodes = GetSize(g.nodes) * 0.49;
+		parts.back().max_nodes = GetSize(g.nodes) * 0.51;
 	}
 
 	partition_hypergraph(g, parts);
