@@ -268,11 +268,12 @@ namespace HyperPart {
 				if (orig2new.count(i))
 					continue;
 				// Pick a random node to merge with
+				const int n_attempts = 20;
 				if (GetSize(n.edges) > 0) {
-					for (int a = 0; a < 10; a++) {
+					for (int a = 0; a < n_attempts; a++) {
 						int merge_edge = rng.rng(GetSize(n.edges));
 						auto &e = g.edges.at(n.edges.at(merge_edge));
-						if (GetSize(e.nodes) > 10)
+						if (GetSize(e.nodes) > 10 && a < (n_attempts - 5))
 							continue;
 						int merge_node = e.nodes.at(rng.rng(GetSize(e.nodes)));
 						if (merge_node == i)
@@ -283,7 +284,7 @@ namespace HyperPart {
 						if (orig2new.count(merge_node)) {
 							// Already a cluster
 							int n2_idx = orig2new.at(merge_node);
-							if (GetSize(new2orig.at(n2_idx)) > 2)
+							if (GetSize(new2orig.at(n2_idx)) > 5)
 								continue;
 							coarsened.nodes.at(n2_idx).area += n.area;
 							new2orig[n2_idx].push_back(i);

@@ -49,8 +49,8 @@ namespace HyperPart {
 			}
 			int node;
 			while (edge >> node) {
-				edges.at(i).nodes.push_back(node);
-				nodes.at(node).edges.push_back(i);
+				edges.at(i).nodes.push_back(node - 1);
+				nodes.at(node - 1).edges.push_back(i);
 			}
 		}
 		for (int i = 0; i < nnodes; i++) {
