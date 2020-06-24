@@ -238,6 +238,14 @@ namespace HyperPart {
 			return cost;
 		}
 
+		int total_area() {
+			int area = 0;
+			for (int i = 0; i < GetSize(g.nodes); i++) {
+				area += g.nodes.at(i).area;
+			}
+			return area;
+		}
+
 		void coarsen(DeterministicRNG &rng, Hypergraph &coarsened, std::unordered_map<int, std::vector<int>> &new2orig) {
 			// This is a very basic algorithm for coarsening that probably doesn't give very good results
 			// Need to find a better one that 
@@ -287,7 +295,7 @@ namespace HyperPart {
 							auto &n2 = coarsened.nodes.back();
 							n2.fixed = false;
 							n2.partition = -1;
-							n2.area = n.area;
+							n2.area = n.area + merge_node_data.area;
 
 							new2orig[GetSize(coarsened.nodes) - 1].push_back(i);
 							new2orig[GetSize(coarsened.nodes) - 1].push_back(merge_node);
@@ -352,8 +360,6 @@ namespace HyperPart {
 			std::fill(part_area.begin(), part_area.end(), 0);
 			for (int i = 0; i < GetSize(g.nodes); i++) {
 				auto &c = g.nodes.at(i);
-				if (c.partition == -1)
-					continue;
 				part_area.at(c.partition) += c.area;
 			}
 		}
@@ -557,9 +563,9 @@ fail:
 		for (auto &n : g.nodes)
 			if (!n.fixed && GetSize(n.edges) > 0)
 				++non_fixed_nodes;
-		std::cerr << "enter level=" << level << ", N=" << non_fixed_nodes << std::endl;
 		FMPartitioner fm(g, partitions);
 		fm.init();
+		std::cerr << "enter level=" << level << ", N=" << non_fixed_nodes << ", A=" << fm.total_area() << std::endl;
 		if (non_fixed_nodes <= 200) {
 			// Final level in the hierarchy
 			// Initial random partioning as our seed
@@ -572,6 +578,11 @@ fail:
 			partition_recursive(rng, coarsened, partitions, level+1);
 			fm.uncoarsen(coarsened, new2orig);
 		}
+		std::cerr << "re-enter level=" << level << ", N=" << non_fixed_nodes << ", cost=" << fm.compute_cost();
+		for (int i = 0; i < GetSize(partitions); i++) {
+			std::cerr << ", A" << i << "=" << fm.part_area.at(i);
+		}
+		std::cerr << std::endl;
 		// The FM optimisation phase
 		fm.run();
 		// Status print
