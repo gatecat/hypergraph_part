@@ -282,6 +282,8 @@ namespace HyperPart {
 					orig2new[i] = GetSize(coarsened.nodes) - 1;
 					continue;
 				}
+				const int max_count = 3;
+				const int area_ratio = 3;
 				if (GetSize(n.edges) > 0) {
 					std::unordered_map<int, float> neighbours;
 					for (int thresh = 20; thresh < 200; thresh *= 1.2) {
@@ -300,15 +302,17 @@ namespace HyperPart {
 										continue; // don't merge two clusters
 									// Already a cluster
 									int n2_idx = orig2new.at(neighbour);
-									if ((coarsened.nodes.at(n2_idx).area + n.area) > (3 * average_area))
+									if ((coarsened.nodes.at(n2_idx).area + n.area) > (area_ratio * average_area))
 										continue;
-									if (GetSize(new2orig.at(n2_idx)) > 2)
+									if (GetSize(new2orig.at(n2_idx)) >= (max_count - 1))
 										continue;
 									// Alias to the first node in the cluster
 									neighbours[new2orig.at(n2_idx).front()] += (1.0f / sqrt(GetSize(e.nodes)));
 								} else if (orig2new.count(i)) {
 									int n2_idx = orig2new.at(i);
-									if ((coarsened.nodes.at(n2_idx).area + merge_node_data.area) > (3 * average_area))
+									if ((coarsened.nodes.at(n2_idx).area + merge_node_data.area) > (area_ratio * average_area))
+										continue;
+									if (GetSize(new2orig.at(n2_idx)) >= (max_count - 1))
 										continue;
 									neighbours[neighbour] += (1.0f / sqrt(GetSize(e.nodes)));
 								} else {
