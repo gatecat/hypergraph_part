@@ -250,8 +250,25 @@ namespace HyperPart {
 			// This is a very basic algorithm for coarsening that probably doesn't give very good results
 			// Need to find a better one that 
 			std::unordered_map<int, int> orig2new;
-			// Merge nodes
+
+			int area_sum = 0;
+			int area_count = 0;
 			for (int i = 0; i < GetSize(g.nodes); i++) {
+				auto &n = g.nodes.at(i);
+				if (n.fixed || GetSize(n.edges) == 0)
+					continue;
+				++area_count;
+				area_sum += n.area;
+			}
+
+			int average_area = area_sum / area_count;
+
+			// Merge nodes
+			std::vector<int> node_indices(GetSize(g.nodes));
+			for (int i = 0; i < GetSize(g.nodes); i++)
+				node_indices.at(i) = i;
+			rng.sorted_shuffle(node_indices);
+			for (int i : node_indices) {
 				auto &n = g.nodes.at(i);
 				if (n.fixed) {
 					// Locked nodes are never merged
@@ -269,7 +286,7 @@ namespace HyperPart {
 					continue;
 				if (GetSize(n.edges) > 0) {
 					std::unordered_map<int, int> neighbours;
-					for (int thresh = 10; thresh < 90; thresh += 20) {
+					for (int thresh = 20; thresh < 1000; thresh *= 1.2) {
 						for (int merge_edge : n.edges) {
 							auto &e = g.edges.at(merge_edge);
 							if (GetSize(e.nodes) > thresh)
@@ -283,6 +300,8 @@ namespace HyperPart {
 								if (orig2new.count(neighbour)) {
 									// Already a cluster
 									int n2_idx = orig2new.at(neighbour);
+									if ((coarsened.nodes.at(n2_idx).area + n.area) > (10 * average_area))
+										continue;
 									if (GetSize(new2orig.at(n2_idx)) > 3)
 										continue;
 									// Alias to the first node in the cluster
@@ -298,7 +317,7 @@ namespace HyperPart {
 					if (GetSize(neighbours) > 0) {
 						auto best_neighbour = std::max_element(neighbours.begin(), neighbours.end(),
 							[&](const std::pair<int, int> &a, const std::pair<int, int> &b) {
-								return (a.second < b.second) || (rng.rng(2) == 1);
+								return (a.second < b.second) || ((a.second == b.second) && rng.rng(2) == 1);
 							});
 						int merge_node = best_neighbour->first;
 						auto &merge_node_data = g.nodes.at(merge_node);
