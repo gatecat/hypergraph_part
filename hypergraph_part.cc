@@ -144,7 +144,9 @@ namespace HyperPart {
 
 		void init() {
 			locked.resize(GetSize(g.nodes), false);
-			part_area.resize(GetSize(partitions), false);
+			part_area.resize(GetSize(partitions), 0);
+			gain_store empty(GetSize(g.nodes));
+			std::swap(gains, empty);
 			for (int i = 0; i < GetSize(g.nodes); i++) {
 				auto &c = g.nodes.at(i);
 				if (c.fixed) {
@@ -282,7 +284,7 @@ namespace HyperPart {
 					orig2new[i] = GetSize(coarsened.nodes) - 1;
 					continue;
 				}
-				const int max_count = 3;
+				const int max_count = 2;
 				const int area_ratio = 3;
 				if (GetSize(n.edges) > 0) {
 					std::unordered_map<int, float> neighbours;
@@ -399,6 +401,16 @@ namespace HyperPart {
 					e2.nodes.push_back(n2);
 				}
 			}
+		}
+
+		void assert_area() {
+			std::fill(part_area.begin(), part_area.end(), 0);
+			for (int i = 0; i < GetSize(g.nodes); i++) {
+				auto &c = g.nodes.at(i);
+				part_area.at(c.partition) += c.area;
+			}
+			for (int i = 0; i < GetSize(partitions); i++)
+				HYPER_ASSERT((part_area.at(i) >= partitions.at(i).min_nodes) && (part_area.at(i) <= partitions.at(i).max_nodes));
 		}
 
 		void uncoarsen(const Hypergraph &coarsened, const std::unordered_map<int, std::vector<int>> &new2orig) {
@@ -614,7 +626,7 @@ fail:
 				n.partition = mm.second;
 			}
 
-			std::cerr << "     start: " << start_cost << " end: " << compute_cost() << " incr_gain: " << best_score << std::endl;
+			std::cerr << "     start: " << start_cost << " end: " << compute_cost() << " incr_gain: " << best_score << " moves_made: " << GetSize(moves_made) << std::endl;
 		}
 
 	};
@@ -644,14 +656,24 @@ fail:
 			std::cerr << ", A" << i << "=" << fm.part_area.at(i);
 		}
 		std::cerr << std::endl;
+		fm.assert_area();
 		// The FM optimisation phase
 		fm.run();
+		for (int i = 0; i < 5; i++) {
+			FMPartitioner fm(g, partitions);
+			fm.init();
+			fm.assert_area();
+			fm.run();
+		}
+		fm.assert_area();
+
 		// Status print
 		std::cerr << "exit level=" << level << ", N=" << non_fixed_nodes << ", cost=" << fm.compute_cost();
 		for (int i = 0; i < GetSize(partitions); i++) {
 			std::cerr << ", A" << i << "=" << fm.part_area.at(i);
 		}
 		std::cerr << std::endl;
+		fm.assert_area();
 	}
 
 
@@ -659,6 +681,8 @@ fail:
 
 	void partition_hypergraph(Hypergraph &g, const std::vector<PartitionConstraint> &partitions) {
 		DeterministicRNG rng;
+
+		rng.rngseed(time(nullptr));
 
 		partition_recursive(rng, g, partitions, 0);
 	}
