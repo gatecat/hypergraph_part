@@ -21,6 +21,6 @@ int main(int argc, char const *argv[])
 
 	partition_hypergraph(g, parts);
 
-	g.dump(std::cout);
+	// g.dump(std::cout);
 	return 0;
 }
