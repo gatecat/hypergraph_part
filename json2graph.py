@@ -36,7 +36,7 @@ for cname, cell in sorted(top_module["cells"].items()):
 	node_count += 1
 
 with open(sys.argv[2], "w") as hf:
-	print("{} {} 1".format(node_count, len(edge2node)), file=hf)
+	print("{} {} 1".format(len(edge2node), node_count), file=hf)
 	for e, nodes in sorted(edge2node.items()):
 		print("1 {}".format(" ".join([str(x + 1) for x in sorted(nodes)])), file=hf)
 	for i in range(node_count):
