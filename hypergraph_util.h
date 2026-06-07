@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <stdint.h>
 
 #define HYPER_ASSERT(x) do { if(!(x)) throw std::runtime_error("assertion failure: " #x); } while (0);
 
